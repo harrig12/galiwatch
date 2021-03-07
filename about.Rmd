@@ -1,7 +1,0 @@
----
-title: "About"
-
----
-
-
-Inspired by Toke Høye’s PollinatorWatch (hosted by [Zooniverse](www.zooniverse.org)), we are setting up time-lapse cameras to gather thousands of images of pollinators visiting two common native flowering plants, salal and dull Oregon grape, at a mid-island location on Galiano Island, British Columbia. We plan to automate the analysis of the images to document the number and type of pollinator visitors we get. In addition, we have set up a weather station and particulate matter sensor to gather hyperlocal weather and air quality data in the immediate vicinity of our cameras. The particulate matter sensor should give us an estimate of pollen count and detect smoke in the air from wildfire drift. The images will be a window to the day-to-day ins and outs of Galiano pollinators that will help us better understand how wildflowers and pollinators are affected by local weather events.   
