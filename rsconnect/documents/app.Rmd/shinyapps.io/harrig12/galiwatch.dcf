@@ -1,0 +1,12 @@
+name: galiwatch
+title: galiwatch
+username:
+account: harrig12
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3751156
+bundleId: 4313644
+url: https://harrig12.shinyapps.io/galiwatch/
+when: 1615154890.62321
+asMultiple: FALSE
+asStatic: FALSE
