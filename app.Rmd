@@ -66,20 +66,19 @@ weather %>%
 
 renderText({ 
     sparce <- weather %>% filter(Date <= input$last_day, Date >= (input$last_day-input$n_days))
-    paste("In selected timeframe, data was picked up for ",  sum(dim(weather)[1] - colSums(is.na(weather)) != 0)," out of 24 sensors.")
-  })
-
-percent_missing <- function(data){
-  round(1 - (sum(is.na(data)) / (dim(data)[1] * dim(data)[2])), 2)
-}
+    paste("In selected timeframe, data was picked up for ",  sum((dim(sparce)[1] - colSums(is.na(sparce))) != 0)," out of 24 sensors.")
+})
 
 renderGauge({
 
-missing <- weather %>%
+mean_missing <- weather %>%
   filter(Date <= input$last_day, Date >= (input$last_day-input$n_days)) %>%
-  percent_missing() 
+  is.na() %>% rowSums() %>% max()
 
-gauge(missing, gaugeSectors(success = c(70, 100), warning = c(41, 70), danger = c(0, 40)),
+gauge(mean_missing, 
+      gaugeSectors(success = c(0, 0.3 * dim(weather)[2]), 
+                   warning = c(0.3 * dim(weather)[2], 0.6 * dim(weather)[2]),
+                   danger = c(0.6 * dim(weather)[2], dim(weather)[2])),
         min = 0, max = 100)
 })
 ```
