@@ -7,4 +7,4 @@ Weather data picked up every minute, recorded to a daily csv and google sheets
 
 ## dashboard
 
-not available yet.
+[See the data live!](https://harrig12.shinyapps.io/galiwatch/)
