@@ -1,5 +1,5 @@
 ---
-title: "GaliWatch Weather Dashboard"
+title: "GaliWatch Data Dashboard"
 output: 
   flexdashboard::flex_dashboard:
     theme: readable
@@ -19,24 +19,87 @@ library(plotly)
 
 # retrieve and parse data
 sheets_deauth()
-
-read_sheet("1HfkGvlkrDyYX0YKIF4nFMhzwl-mJ-f4K2nVFsyOi6v8", sheet = 'tiny sample',
+sheet_id <- readLines('.sheet_id')
+read_sheet(sheet_id, sheet = 'weather',
            col_types = paste0(c("c", "c", rep("n", 24)),collapse = '')) %>%
-  mutate(Date = ymd(Date), Time = hms(Time)) -> weather
+  mutate(DateTime = ymd_hms(paste(Date, Time)), Date = ymd(Date), Time = hms(Time)) -> weather
+
+tsc <- colorRampPalette(c('#42C9A9','#75B950', '#12284F'))
+
 ```
 
+
+
+Today {data-icon="fa-sun"}
+===================================== 
+
+Row {data-height=50}
+-------------------------------------
+
+### Weather now
+
+```{r}
+valueBox("19°C", icon = "fa-sun", color = '#448878')
+```
+
+### Humidity
+
+```{r}
+#https://coolors.co/69b3a2-f26754-f5c936-38423b-3f5e5a
+gauge(30.14, 15, 40, gaugeSectors(colors = '#69b3a2'))
+```
+
+### Pressure
+
+```{r}
+gauge(83, 0, 100, gaugeSectors(colors = '#69b3a2'))
+```
+
+
+Row 
+-------------------------------------
+
+### Temperature
+
+```{r}
+renderPlotly({
+  
+weather %>%
+  #filter(Date == date(now())) %>%
+  filter(Date == date('2021-03-22')) %>%
+  plot_ly(x = ~DateTime, type = 'scatter', mode = 'lines+markers',
+          y = ~`Indoor Temperature F`, name = 'Indoor Temp') %>%
+  add_trace(y = ~`Outdoor Temperature F`, name = 'Outdoor Temp') %>%
+  add_trace(y = ~`Dew Point`, name = 'Dew Point') %>%
+  add_trace(y = ~`Feels like`, name = 'Feels Like') %>%
+  layout(yaxis = list(title = 'Temperature (F)'), hovermode = "x unified",
+         colorway = tsc(4)) 
+  
+})
+``` 
+
+### Air Quality
+
+```{r}
+plot(1:20)
+```
+
+10-day {data-icon="fa-calendar-alt"}
+=====================================
 
 Column {.sidebar}
 -----------------------------------------------------------------------
 
-Weather data collected as part of [Operation Galiwatch](https://harrig12.github.io/galiwatch/)
+Browse 10-day historical data. Weather data collected as part of [Operation Galiwatch](https://harrig12.github.io/galiwatch/)
 
 ```{r}
-dateInput("last_day", label = "Pick Day", value = now(), 
-          min = min(weather$Date, na.rm = T) + 7, max = max(weather$Date, na.rm = T))
+#dateInput("last_day", label = "Pick Day", value = max(weather$Date, na.rm = T), 
+#          min = min(weather$Date, na.rm = T) + 10, max = max(weather$Date, na.rm = T))
 
-sliderInput("n_days", label = "How many historical days to show?",
-            min = 3, max = 10, value = 7, step = 1)
+dateInput("last_day", label = "Pick Day", value = date('2021-03-01'), 
+          min = date("2021-02-26"), max = date('2021-03-11'))
+
+n_days = 10
 ```
 
 Row {data-height=400}
@@ -48,14 +111,15 @@ Row {data-height=400}
 renderPlotly({
 
 weather %>%
-  filter(Date <= input$last_day, Date >= (input$last_day-input$n_days)) %>%
-  tail(input$n_days) %>%
+  filter(Date <= input$last_day, Date >= (input$last_day-n_days)) %>%
+  tail(n_days) %>%
   plot_ly(x = ~Date, type = 'scatter', mode = 'lines+markers', colors = "Set2",
           y = ~`Indoor Temperature F`, name = 'Indoor Temp') %>%
   add_trace(y = ~`Outdoor Temperature F`, name = 'Outdoor Temp') %>%
   add_trace(y = ~`Dew Point`, name = 'Dew Point') %>%
   add_trace(y = ~`Feels like`, name = 'Feels Like') %>%
-  layout(yaxis = list(title = 'Temperature (F)'), hovermode = "x unified") 
+  layout(yaxis = list(title = 'Temperature (F)'), hovermode = "x unified",
+         colorway = tsc(4)) 
   
 })
 ``` 
@@ -65,14 +129,14 @@ weather %>%
 ```{r}
 
 renderText({ 
-    sparce <- weather %>% filter(Date <= input$last_day, Date >= (input$last_day-input$n_days))
+    sparce <- weather %>% filter(Date <= input$last_day, Date >= (input$last_day-n_days))
     paste("In selected timeframe, data was picked up for ",  sum((dim(sparce)[1] - colSums(is.na(sparce))) != 0)," out of 24 sensors.")
 })
 
 renderGauge({
 
 mean_missing <- weather %>%
-  filter(Date <= input$last_day, Date >= (input$last_day-input$n_days)) %>%
+  filter(Date <= input$last_day, Date >= (input$last_day-n_days)) %>%
   is.na() %>% rowSums() %>% max()
 
 gauge(mean_missing, 
@@ -92,12 +156,13 @@ Row
 renderPlotly({
 
 weather %>%
-  filter(Date < input$last_day, Date > (input$last_day -input$n_days)) %>%
-  tail(input$n_days) %>%
+  filter(Date < input$last_day, Date > (input$last_day -n_days)) %>%
+  tail(n_days) %>%
   plot_ly(x = ~Date, type = 'scatter', mode = 'lines+markers', colors = "Set2",
           y = ~`Indoor Humidity %`, name = 'Indoor Humidity') %>%
   add_trace(y = ~`Outdoor Humidity %`, name = 'Outdoor Humidity') %>%
-  layout(yaxis = list(title = 'Humidity (%)'), hovermode = "x unified") 
+  layout(yaxis = list(title = 'Humidity (%)'), hovermode = "x unified",
+         colorway = tsc(4)) 
   
 })
 ```
@@ -108,9 +173,17 @@ weather %>%
 renderPlot({
   
 weather %>%
-  filter(Date < input$last_day, Date > (input$last_day -input$n_days)) %>%
+  filter(Date < input$last_day, Date > (input$last_day -n_days)) %>%
   windRose(ws = "Wind Speed(mph)" , wd = "wind direction(Degree)")
 
+
 })
+
+
+weather %>%
+  mutate(wd=`wind direction(Degree)`, ws=`Wind Speed(mph)`) %>%
+  polarFreq(pollutant = "Wind Speed(mph)")
 ```
+
+
 

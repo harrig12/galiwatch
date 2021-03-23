@@ -17,3 +17,9 @@ not available yet.
 * https://coolors.co/69b3a2-153243-284b63-75485e-cb904d
 * https://nwtang.shinyapps.io/weather/
 * https://stackoverflow.com/questions/17266780/wind-rose-with-ggplot-r
+* https://openweathermap.org/city/5959360
+* https://cran.r-project.org/web/packages/weathercan/weathercan.pdf
+* https://bcgov.github.io/bcdata/index.html
+* https://www.wunderground.com/weather/ca/galiano-island-9
+* https://dreamrs.github.io/shinyWidgets/index.html
+
