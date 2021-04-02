@@ -1,6 +1,7 @@
+.gitignore
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
 .sheet_id
-auxillary/
+.auxillary/
