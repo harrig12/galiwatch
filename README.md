@@ -22,4 +22,4 @@ not available yet.
 * https://bcgov.github.io/bcdata/index.html
 * https://www.wunderground.com/weather/ca/galiano-island-9
 * https://dreamrs.github.io/shinyWidgets/index.html
-
+* https://stackoverflow.com/questions/53938523/chart-with-dynamic-points-combined-wind-speed-and-direction

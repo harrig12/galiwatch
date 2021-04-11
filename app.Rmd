@@ -33,7 +33,7 @@ tsc <- colorRampPalette(c('#42C9A9','#75B950', '#12284F'))
 Today {data-icon="fa-sun"}
 ===================================== 
 
-Row {data-height=50}
+Row {data-height=125}
 -------------------------------------
 
 ### Weather now
@@ -180,9 +180,7 @@ weather %>%
 })
 
 
-weather %>%
-  mutate(wd=`wind direction(Degree)`, ws=`Wind Speed(mph)`) %>%
-  polarFreq(pollutant = "Wind Speed(mph)")
+
 ```
 
 
