@@ -1,0 +1,110 @@
+/* text formatting */
+
+@import url('https://fonts.googleapis.com/css2?family=Cabin:ital,wght@0,500;1,500&family=Roboto&display=swap');
+
+body {
+  font-family: 'Roboto', sans-serif; 
+}
+
+
+h1, h2, h3, h4, h5, h6, .level3, .navbar-brand, .navbar,
+.storyboard-nav .sbframelist ul li{
+  font-family: 'Cabin', sans-serif;
+}
+
+.level1 {
+  margin-top: 0px;
+}
+
+.level1 h1 {
+  color: #69b3a2;
+  margin-bottom: 0;
+}
+
+.title {
+  text-align: center;
+  padding-top: 0px;
+}
+
+
+
+/* ---------- Links ----------------- */
+a, a:hover {
+  color: #69b3a2;
+}
+
+/* ---------- Button ----------------- */
+.btn {
+    border-width: 0 0px 0px 0px;
+    font-weight: normal;
+    text-transform: ;
+    color: #69b3a2;
+}
+
+.btn-default {
+    color: #69b3a2;
+    background-color: #ffffff;
+    border-color: #ffffff;
+}
+
+.nav-pills > li.active > a, .nav-pills > li.active > a:hover, .nav-pills > li.active > a:focus {
+    background-color: #69b3a2;
+}
+
+  
+/* don't format anchors as links */
+.no-style, .no-style:hover, .no-style:visited, .no-style:focus, .no-style:active {
+  text-decoration: none;
+  color: inherit;
+  outline: 0;
+  cursor: auto;
+  padding-bottom: 30px;
+}
+
+
+/* navbar */
+.navbar-logo img {
+  max-width: 50px;
+}
+
+
+/* storyboard frame formatting */
+.storyboard-nav .sbframelist ul li.active {
+    background-color: #69b3a2;
+}
+
+.storyboard-nav .sbframelist ul li{
+ font-size: 20px;
+}
+
+/* map tooltips */
+
+.leaflet-tooltip-bottom {
+  margin-top: 8px;
+  font-size: 12px !important;
+  font-family: 'Roboto', sans-serif !important;
+}
+
+.leaflet-tooltip-left, .leaflet-tooltip-right {
+  font-size: 20px !important;
+  font-family: 'Cabin', sans-serif;
+}
+
+.leaflet-tooltip-top:before, .leaflet-tooltip-bottom:before, 
+.leaflet-tooltip-right:before, .leaflet-tooltip-left:before {
+  border-top-color: transparent;
+  border-bottom-color: transparent;
+  border-right-color: transparent;
+  border-left-color: transparent;
+}
+
+.leaflet-tooltip {
+  position: absolute;
+  padding: 6px;
+  background-color: transparent;
+  border: none;
+  color: black;
+  white-space: nowrap;
+  box-shadow: none;
+
+}

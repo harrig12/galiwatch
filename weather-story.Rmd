@@ -1,0 +1,176 @@
+---
+title: "The Weather Story"
+output: 
+  flexdashboard::flex_dashboard:
+    storyboard: true
+    theme: readable
+    css: static/extra.css
+    favicon: static/teaSwamp.svg
+    logo: static/teaSwamp.svg
+    navbar:
+      - title: "GaliWatch Home"
+        icon: "fas fa-home" 
+        href: "https://galiwatch.ca" 
+---
+
+```{r setup, include=F, echo=F}
+library(leaflet)
+library(plotly)
+library(dplyr)
+library(lubridate)
+library(bcmaps)
+
+'static/weather-story.csv' %>%
+  readr::read_csv() %>%
+  mutate(Date = dmy(Date), 
+         day = ymd(day),
+         across(c(`Wind Chill`, `Dew Point`, 
+                  `Daily Rainfall accumulation`), as.numeric)
+         ) %>%
+  group_by(Date) -> df
+
+subtitle <- function(text){
+  # circumvent plotly's lack of subplot titles
+  return(list(text = text,
+              font = list(family = "'Cabin', sans-serif",
+                          size = 14),
+              xref = "paper",
+              yref = "paper",
+              yanchor = "bottom",
+              xanchor = "center",
+              align = "center",
+              x = 0.5,
+              y = 1,
+              showarrow = FALSE
+          ))
+}
+
+```
+
+### Air quality management in British Columbia  {data-commentary-width=400}
+
+```{r bcmap}
+zoneCols <- c('#4a968f','#2a797c','#69b3a2','#284b63','#2f5b69','#366a6e','#448878')
+
+frogIcon <- makeIcon(iconUrl = "static/teaSwamp.svg",
+                     iconWidth = 40, iconHeight = 40,
+                     iconAnchorX = 0, iconAnchorY = 90)
+
+airzones(ask = F) %>%
+  leaflet() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addPolygons(color = "#444444", weight = 1, smoothFactor = 0.5,
+              opacity = 1.0, fillOpacity = 0.7, label=~paste0(Airzone, ' airzone'),
+              fillColor = ~colorFactor(zoneCols, Airzone)(Airzone),
+              highlightOptions = highlightOptions(color = "white", 
+                                                  weight = 1.5,
+                                                  bringToFront = TRUE)) %>%
+  addMarkers(lat=48.9236, lng=-123.4415, label='Galiano Island', icon=frogIcon,
+             labelOptions = labelOptions(noHide = T, direction = "bottom"))
+
+
+```
+
+*** 
+
+Air quality is actively monitored throughout BC and the province is part of the national Air Quality Management System (AQMS). In this system provinces are divided into air zones that typically exhibit similar air quality characteristics. BC has seven air zones with Galiano in the Georgia Straight Air Zone, which includes communities such as Victoria, Nanaimo, Comox, Campbell River, Whistler, Squamish, and Powell River.  
+
+
+
+### Air pollution – particulate matter (PM) {data-commentary-width=400}
+
+
+```{r}
+df %>% 
+  summarize(mean = mean(`<2.5`), lo = min(`<2.5`), hi = max(`<2.5`)) %>%
+  mutate(across(c(mean, lo, hi), round, digits=2)) %>%
+  plot_ly(x = ~Date, y = ~mean, name = '24h mean', type = "scatter",
+          mode = "lines", showlegend = FALSE, hovertemplate = '%{y}'
+          ) %>%
+  add_ribbons(x = ~Date, text = summarize(df, lo=min(`<2.5`))$lo,
+              ymax = ~hi, ymin = ~lo, name = '24h low/high',
+              line = list(color = paste0(zoneCols[3], '33')),
+              fillcolor = paste0(zoneCols[3], '66'),
+              hovertemplate = '(%{text}, %{y})'
+             ) %>%
+  layout(hovermode="x unified", font = list(family="Roboto"),
+         annotations = subtitle('PM <2.5 April 4-17'),
+         yaxis = list(title = 'µg/m<sup>3</sup>')
+        )  -> pm25
+
+```
+
+
+```{r}
+df %>% 
+  summarize(mean = mean(`<10`), lo = min(`<10`), hi = max(`<10`)) %>%
+  mutate(across(c(mean, lo, hi), round, digits=2)) %>%
+  plot_ly(x = ~Date, y = ~mean, name = '24h mean', type = "scatter",
+          mode = "lines", showlegend = FALSE, hovertemplate = '%{y}'
+          ) %>%
+  add_ribbons(x = ~Date, text = summarize(df, lo=min(`<10`))$lo,
+              ymax = ~hi, ymin = ~lo, name = '24h low/high',
+              line = list(color = paste0(zoneCols[6], '33')),
+              fillcolor = paste0(zoneCols[6], '66'),
+              hovertemplate = '(%{text}, %{y})'
+             ) %>%
+  layout(hovermode="x unified", font = list(family="Roboto"),
+         annotations = subtitle('PM <2.5 April 4-17'),
+         yaxis = list(title = 'µg/m<sup>3</sup>')
+        )  -> pm10
+
+```
+
+
+```{r}
+subplot(pm25,pm10, nrows=2, shareX = T, titleY = T) 
+```
+
+***
+
+PM 2.5 refers to fine airborne particles with a diameter of 2.5 microns or less (PM 2.5). They are produced by many human activities and natural sources such as vehicle exhausts, forestry operations, woodstoves, wildfires, and wind. Fine particulate matter may have harmful effects on health.   
+
+PM 10 refers to all solid and liquid airborne particles with a diameter of 10 microns or less (and include PM 2.5). PM 10 particles are highly variable depending on the source material. Many are formed by chemical or physical processes in the atmosphere. Inhaling PM10 may also be deleterious to health.  
+
+BC’s air quality objectives reflect the maximum acceptable level of various pollutants established in national air quality targets. The air quality objectives over a 24-hour period for PM 2.5 (24hr) and PM 10 (24hr) are an average of 25 µg/m3 and 50 µg/m3.
+
+### Air pollution – oxidising gases, reducing gases, and ammonia {data-commentary-width=400}
+
+Air pollutants include gases that are emitted into the atmosphere at concentrations that are harmful to the environment or to human health. Our enviro air quality sensors detect groups of gases rather than single gases so are unable to precisely quantify levels of any one gas. However, in our setting and given their sensitivity, the gases that are primarily detected are NO<sub>2</sub> (oxidising), CO (reducing), and ammonia (NH<sub>3</sub>). Ammonia is one of the main sources of nitrogen pollution (mainly through agriculture), alongside nitrogen oxides. In our setting we are most likely to detect these pollutants as a result of smoke, for example from wood burning stoves or wildfires, and from vehicle exhaust due to proximity to roads. 
+
+### NO<sub>2</sub> {data-commentary-width=400}
+
+```{r}
+head(df
+     )
+```
+```{r}
+df %>% 
+  summarize(mean = mean(`Oxidising`), lo = min(`Oxidising`), hi = max(`Oxidising`)) %>%
+  mutate(across(c(mean, lo, hi), round, digits=2)) %>%
+  plot_ly(x = ~Date, y = ~mean, name = '24h mean', type = "scatter",
+          mode = "lines", showlegend = FALSE, hovertemplate = '%{y}'
+          ) %>%
+  add_ribbons(x = ~Date, text = summarize(df, lo=min(`Oxidising`))$lo,
+              ymax = ~hi, ymin = ~lo, name = '24h low/high',
+              line = list(color = paste0(zoneCols[3], '33')),
+              fillcolor = paste0(zoneCols[3], '66'),
+              hovertemplate = '(%{text}, %{y})'
+             ) %>%
+  layout(hovermode="x unified", font = list(family="Roboto"),
+         annotations = subtitle('PM <2.5 April 4-17'),
+         yaxis = list(title = 'µg/m<sup>3</sup>')
+        ) 
+
+```
+
+***
+
+BC’s air quality objective for NO<sub>2</sub> is 100 parts per billion (ppb) averaged over a 1-hour period. For the two-week period from Apr 4–17, NO<sub>2</sub> (1hr) levels measured in Victoria (Colwood City Hall) ranged from approximately 3-12 ppb, while our resistance readings ranged from approximately 10-1550 ohms. If we assume the air quality variation across the Georgia Straight air zone is representative for our site, a change in resistance of 170 ohms is equivalent to a change in NO<sub>2</sub> of around 1 ppb. 
+
+### CO and NH<sub>3</sub> {data-commentary-width=400}
+
+These pollutants are reducing gases. Our reducing gases (CO) and ammonia sensors provide a qualitative estimate of their concentration in the atmosphere with decreasing resistance indicating decreasing air quality. Readings collected through April see resistance values for reducing gases ranging from 90-260 Ω (around a 3-fold change), and from 90-1500 Ω (around a 16-fold change) for NH3. At this time of year, woodstoves and local traffic are contributing to fluctuations in air quality. 
+
+### Weather Data
+
