@@ -3,7 +3,9 @@ Tracking pollinator behaviour + weather data collection on Galiano Island
 
 ## data dashboard
 
-not available yet.
+demo is incomplete
+https://harrig12.shinyapps.io/galiwatch/
+
 
 ## useful links
 
