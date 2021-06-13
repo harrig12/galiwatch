@@ -4,7 +4,7 @@ output:
   flexdashboard::flex_dashboard:
     storyboard: true
     theme: readable
-    css: static/extra.css
+    css: static/story.css
     favicon: static/teaSwamp.svg
     logo: static/teaSwamp.svg
     navbar:
