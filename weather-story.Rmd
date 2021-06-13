@@ -197,3 +197,40 @@ These pollutants are reducing gases. Our reducing gases (CO) and ammonia sensors
 
 ### Weather Data
 
+```{r}
+df %>% 
+  summarize(Humidity = round(mean(`Outdoor Humidity %`), 2),
+         Pressure = round(mean(`Pressure`/1000), 2)) %>%
+  plot_ly() %>%
+  add_lines(x = ~Date,y = ~Humidity, name = 'Humidity (%)', 
+            line = list(color=zoneCols[2]), mode = "lines",
+            type = "scatter",  
+            hovertemplate = '%{y}') %>%
+  add_lines(x = ~Date,y = ~Pressure, name = 'Pressure (kPa)',
+            line = list(color=zoneCols[4])) %>%
+  layout(font = list(family="Roboto"), hovermode= 'x unified',
+         annotations = subtitle('Weather April 14-17'),
+         yaxis = list(title ='')
+         ) -> p1
+
+
+df %>% 
+  summarize(hi = max(Temp),
+            lo = min(Temp)) %>%
+  mutate(across(c(hi, lo), round, digits = 2)) %>%
+  plot_ly() %>%
+  add_lines(x = ~Date, y = ~hi, name = 'Daily max temp',
+            line = list(color='#75485E'), mode = "lines",
+            type = "scatter",  
+            hovertemplate = '%{y}') %>%
+  add_lines(x = ~Date, y = ~lo, name = 'Daily min temp',
+            line = list(color='#CB904D')) %>%
+  layout(font = list(family="Roboto"), hovermode= 'x unified',
+         yaxis = list(title ='Degrees C')
+         ) -> p2
+
+
+subplot(p1,p2, nrows=2, shareX = T, titleY = T) 
+
+```
+
