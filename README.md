@@ -1,10 +1,12 @@
 # galiwatch
 Tracking pollinator behaviour + weather data collection on Galiano Island
 
-## enviroplus
+## storyboard
 
-Weather data picked up every minute, recorded to a daily csv and google sheets
+storyboards are a fun way to display information and data
 
-## dashboard
+## useful links
 
-[See the data live!](https://harrig12.shinyapps.io/galiwatch/)
+* https://coolors.co/4a968f-2a797c-69b3a2-284b63-2f5b69-366a6e-448878
+* https://github.com/bcgov/bcmaps
+* 
