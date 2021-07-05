@@ -27,11 +27,18 @@ ws_id <- '1UKZGQyFB_Zqxr5qxvNoqTj26pm01lsclba1kYEzchbQ'
 
 ep <- read_sheet(ep_id) %>%
   mutate(Date = dmy(Date),
-         Time = hms::as_hms(Time)) 
+         Time = hms::as_hms(Time),
+         `Temperature C` = temperature, 
+         `Temperature F` = c2f(temperature))
 
 ws <- read_sheet(ws_id) %>%
   mutate(Date = ymd(Date),
-         Time = hms::as_hms(Time))
+         Time = hms::as_hms(Time),
+         `Indoor Temperature C` = f2c(`Indoor Temperature F`),
+         `Outdoor Temperature C` = f2c(`Outdoor Temperature F`)
+        )
+         
+         
 ```
 
 
@@ -40,8 +47,7 @@ Day view {data-icon="fa-sun"}
 ===================================== 
 
 
-Row {data-height=85}
-
+Row {data-height=200}
 -------------------------------------
 
 ### Date 
@@ -56,26 +62,7 @@ dateInput("one_day", label = "Pick Day", value = date('2021-04-01'),
 fc_switch(label='Units', inputId = 'tmp_unit')
 ```
 
-### Low
-
-```{r}
-renderValueBox({
-  
-lo <- ep %>% 
-  subset(Date == input$one_day) %>%
-  summarise(min(temperature))
-  
-temp <- ifelse(input$tmp_unit,
-               paste0(round(lo,2),"°C"), 
-               paste0(round(c2f(lo),2), "°F"))
-
-
-valueBox(temp, icon = "fa-thermometer-quarter", color = '#448878')
-  
-})
-```
-
-### High
+### Daily high/low
 
 ```{r}
 renderValueBox({
@@ -88,10 +75,26 @@ temp <- ifelse(input$tmp_unit,
                paste0(round(hi,2),"°C"), 
                paste0(round(c2f(hi),2), "°F")) 
 
-valueBox(temp, icon = "fa-thermometer-full", color = '#448878')
+valueBox(temp, icon = "fa-thermometer-half", color = '#448878')
 
 })
+
+renderValueBox({
+  
+lo <- ep %>% 
+  subset(Date == input$one_day) %>%
+  summarise(min(temperature))
+  
+temp <- ifelse(input$tmp_unit,
+               paste0(round(lo,2),"°C"), 
+               paste0(round(c2f(lo),2), "°F"))
+
+
+valueBox(temp, icon = "fa-thermometer-half", color = '#448878')
+  
+})
 ```
+
 
 ### Average Humidity
 
@@ -118,25 +121,37 @@ Row
 ```{r}
 renderPlotly({
   
-ws %>%
+axis_name = ifelse(input$tmp_unit, 
+                   'Temperature (C)', 
+                   'Temperature (F)')
+
+if(input$tmp_unit){  
+  foo <- ws %>%
+    mutate(y_in = `Indoor Temperature C`,
+           y_out = `Outdoor Temperature C`) 
+} else {
+  foo <- ws %>%
+    mutate(y_in = `Indoor Temperature F`,
+           y_out = `Outdoor Temperature F`) 
+}
+  
+  
+foo %>%
   filter(Date == input$one_day) %>%
-  mutate(y1=`Indoor Temperature F`) %>%
   plot_ly(x = ~Time, type = 'scatter', mode = 'lines+markers',
-          y = ~y1, name = 'Indoor Temp') %>%
-  add_trace(y = ~`Outdoor Temperature F`, name = 'Outdoor Temp') %>%
-  add_trace(y = ~`Dew Point`, name = 'Dew Point') %>%
-  add_trace(y = ~`Feels like`, name = 'Feels Like') %>%
-  layout(yaxis = list(title = 'Temperature (F)'), hovermode = "x unified",
-         colorway = tsc(4)) 
+          y = ~y_in, name = 'Indoor') %>%
+  add_trace(y = ~y_out, name = 'Outdoor') %>%
+  #add_trace(y = ~`Dew Point`, name = 'Dew Point') %>%
+  #add_trace(y = ~`Feels like`, name = 'Feels Like') %>%
+  layout(yaxis = list(title = axis_name), 
+         hovermode = "x unified", colorway = tsc(4)) 
   
 })
 ``` 
 
-### Air Quality
+### Bee of the day
 
-```{r}
-plot(1:20)
-```
+![](gallery/k.jpg)
 
 10-day view {data-icon="fa-calendar-alt"}
 =====================================
@@ -154,6 +169,30 @@ dateInput("last_day", label = "Pick Day", value = date('2021-03-01'),
           min = date("2021-02-26"), max = date('2021-03-11'))
 
 n_days = 10
+
+dateRangeInput("dates", 
+                     "Date range",
+                     start = "2015-01-01", 
+                     end = "2022-01-01")
+textOutput("DateRange")
+
+renderText({
+        # make sure end date later than start date
+        validate(
+          need(input$dates[2] > input$dates[1], "end date is earlier than start date"
+               )
+          )
+
+        # make sure greater than 2 week difference
+        validate(
+          need(difftime(input$dates[2], input$dates[1], "days") > 14, "date range less the 14 days"
+               )
+          )
+
+        paste("Your date range is", 
+              difftime(input$dates[2], input$dates[1], units="days"),
+              "days")
+      })
 ```
 
 Row {data-height=400}
@@ -224,19 +263,13 @@ ws %>%
 ### Wind rose
 
 ```{r}
-renderPlot({
+renderPlotly({
   
 ws %>%
   filter(Date < input$last_day, Date > (input$last_day -n_days)) %>%
-  windRose(ws = "Wind Speed(mph)" , wd = "wind direction(Degree)")
-
-
-})
-
-ws %>%
-  subset(Date == '2021-02-15', y_bins=10) %>%
   windrose()
 
+})
 
 ```
 
