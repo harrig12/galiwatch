@@ -8,51 +8,105 @@ output:
 runtime: shiny
 ---
 
+
 ```{r global, include=FALSE, warning=FALSE}
 # load data in 'global' chunk so it can be shared by all users of the dashboard
-library(lubridate)
-library(openair)
+
 library(flexdashboard)
 library(dplyr)
-library(googlesheets4)
+library(lubridate)
 library(plotly)
+library(ggplot2)
+library(googlesheets4)
+source('helpers.R')
+gs4_deauth()
 
-# retrieve and parse data
-sheets_deauth()
-sheet_id <- readLines('.sheet_id')
-read_sheet(sheet_id, sheet = 'weather',
-           col_types = paste0(c("c", "c", rep("n", 24)),collapse = '')) %>%
-  mutate(DateTime = ymd_hms(paste(Date, Time)), Date = ymd(Date), Time = hms(Time)) -> weather
 
-tsc <- colorRampPalette(c('#42C9A9','#75B950', '#12284F'))
+ep_id <- '18NDBVmR90-vh-sBlEiAqfRN6XSqHd2_LPkrkyf0i0ZM'
+ws_id <- '1UKZGQyFB_Zqxr5qxvNoqTj26pm01lsclba1kYEzchbQ'
 
+ep <- read_sheet(ep_id) %>%
+  mutate(Date = dmy(Date),
+         Time = hms::as_hms(Time)) 
+
+ws <- read_sheet(ws_id) %>%
+  mutate(Date = ymd(Date),
+         Time = hms::as_hms(Time))
 ```
 
 
 
-Today {data-icon="fa-sun"}
+Day view {data-icon="fa-sun"}
 ===================================== 
 
-Row {data-height=125}
+
+Row {data-height=85}
+
 -------------------------------------
 
-### Weather now
+### Date 
 
 ```{r}
-valueBox("19°C", icon = "fa-sun", color = '#448878')
+date_range_min <- max(min(ep$Date), min(ws$Date))
+date_range_max <- min(max(ep$Date), max(ws$Date))
+ 
+dateInput("one_day", label = "Pick Day", value = date('2021-04-01'),
+          min = date_range_min, max = date_range_max)
+
+fc_switch(label='Units', inputId = 'tmp_unit')
 ```
 
-### Humidity
+### Low
 
 ```{r}
-#https://coolors.co/69b3a2-f26754-f5c936-38423b-3f5e5a
-gauge(30.14, 15, 40, gaugeSectors(colors = '#69b3a2'))
+renderValueBox({
+  
+lo <- ep %>% 
+  subset(Date == input$one_day) %>%
+  summarise(min(temperature))
+  
+temp <- ifelse(input$tmp_unit,
+               paste0(round(lo,2),"°C"), 
+               paste0(round(c2f(lo),2), "°F"))
+
+
+valueBox(temp, icon = "fa-thermometer-quarter", color = '#448878')
+  
+})
 ```
 
-### Pressure
+### High
 
 ```{r}
-gauge(83, 0, 100, gaugeSectors(colors = '#69b3a2'))
+renderValueBox({
+  
+hi <- ep %>% 
+  subset(Date == input$one_day) %>% 
+  summarise(max(temperature)) 
+
+temp <- ifelse(input$tmp_unit,
+               paste0(round(hi,2),"°C"), 
+               paste0(round(c2f(hi),2), "°F")) 
+
+valueBox(temp, icon = "fa-thermometer-full", color = '#448878')
+
+})
+```
+
+### Average Humidity
+
+```{r}
+renderGauge({
+
+ep %>%
+  subset(Date == input$one_day) %>%
+  summarise(mean(humidity)) %>%
+  round(2) %>%
+  as.numeric() %>%
+    
+gauge(0, 100, gaugeSectors(colors = '#69b3a2'))
+  
+})
 ```
 
 
@@ -64,11 +118,11 @@ Row
 ```{r}
 renderPlotly({
   
-weather %>%
-  #filter(Date == date(now())) %>%
-  filter(Date == date('2021-03-22')) %>%
-  plot_ly(x = ~DateTime, type = 'scatter', mode = 'lines+markers',
-          y = ~`Indoor Temperature F`, name = 'Indoor Temp') %>%
+ws %>%
+  filter(Date == input$one_day) %>%
+  mutate(y1=`Indoor Temperature F`) %>%
+  plot_ly(x = ~Time, type = 'scatter', mode = 'lines+markers',
+          y = ~y1, name = 'Indoor Temp') %>%
   add_trace(y = ~`Outdoor Temperature F`, name = 'Outdoor Temp') %>%
   add_trace(y = ~`Dew Point`, name = 'Dew Point') %>%
   add_trace(y = ~`Feels like`, name = 'Feels Like') %>%
@@ -84,7 +138,7 @@ weather %>%
 plot(1:20)
 ```
 
-10-day {data-icon="fa-calendar-alt"}
+10-day view {data-icon="fa-calendar-alt"}
 =====================================
 
 Column {.sidebar}
@@ -110,7 +164,7 @@ Row {data-height=400}
 ```{r}
 renderPlotly({
 
-weather %>%
+ws %>%
   filter(Date <= input$last_day, Date >= (input$last_day-n_days)) %>%
   tail(n_days) %>%
   plot_ly(x = ~Date, type = 'scatter', mode = 'lines+markers', colors = "Set2",
@@ -129,20 +183,20 @@ weather %>%
 ```{r}
 
 renderText({ 
-    sparce <- weather %>% filter(Date <= input$last_day, Date >= (input$last_day-n_days))
+    sparce <- ws %>% filter(Date <= input$last_day, Date >= (input$last_day-n_days))
     paste("In selected timeframe, data was picked up for ",  sum((dim(sparce)[1] - colSums(is.na(sparce))) != 0)," out of 24 sensors.")
 })
 
 renderGauge({
 
-mean_missing <- weather %>%
+mean_missing <- ws %>%
   filter(Date <= input$last_day, Date >= (input$last_day-n_days)) %>%
   is.na() %>% rowSums() %>% max()
 
 gauge(mean_missing, 
-      gaugeSectors(success = c(0, 0.3 * dim(weather)[2]), 
-                   warning = c(0.3 * dim(weather)[2], 0.6 * dim(weather)[2]),
-                   danger = c(0.6 * dim(weather)[2], dim(weather)[2])),
+      gaugeSectors(success = c(0, 0.3 * dim(ws)[2]), 
+                   warning = c(0.3 * dim(ws)[2], 0.6 * dim(ws)[2]),
+                   danger = c(0.6 * dim(ws)[2], dim(ws)[2])),
         min = 0, max = 100)
 })
 ```
@@ -155,7 +209,7 @@ Row
 ```{r}
 renderPlotly({
 
-weather %>%
+ws %>%
   filter(Date < input$last_day, Date > (input$last_day -n_days)) %>%
   tail(n_days) %>%
   plot_ly(x = ~Date, type = 'scatter', mode = 'lines+markers', colors = "Set2",
@@ -172,13 +226,16 @@ weather %>%
 ```{r}
 renderPlot({
   
-weather %>%
+ws %>%
   filter(Date < input$last_day, Date > (input$last_day -n_days)) %>%
   windRose(ws = "Wind Speed(mph)" , wd = "wind direction(Degree)")
 
 
 })
 
+ws %>%
+  subset(Date == '2021-02-15', y_bins=10) %>%
+  windrose()
 
 
 ```

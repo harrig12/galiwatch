@@ -19,3 +19,5 @@ https://harrig12.shinyapps.io/galiwatch/
 * https://www.wunderground.com/weather/ca/galiano-island-9
 * https://dreamrs.github.io/shinyWidgets/index.html
 * https://stackoverflow.com/questions/53938523/chart-with-dynamic-points-combined-wind-speed-and-direction
+* https://coolors.co/69b3a2-f26754-f5c936-38423b-3f5e5a
+* https://github.com/statnmap/RshinyApps
